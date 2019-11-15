@@ -1,6 +1,9 @@
 # ignoring keys folder
 .keys
 
+#ignoring others folder
+.others
+
 # ignoring crt and key files
 *.crt
 *.key
