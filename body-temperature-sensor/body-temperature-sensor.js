@@ -10,6 +10,9 @@ const endpointFile = require('/home/ec2-user/environment/endpoint.json');
 // Fetch the deviceName from the folder name
 const deviceName = __dirname.split('/').pop();
 
+// Charger Topic to subscribe to check for charge status
+const chargerTopic = 'scalable/charger/';
+
 // Create the thingShadow object with argument data
 const device = awsIoT.device({
    keyPath: 'private.pem.key',
@@ -21,10 +24,12 @@ const device = awsIoT.device({
 
 var battery;
 var isCharging = false;
+
 // Function that gets executed when the connection to IoT is established
 device.on('connect', function() {
     console.log('Connected to AWS IoT');
     battery = 100.0;
+    device.subscribe(chargerTopic + deviceName);
     // Start the publish loop
     infiniteLoopPublish();
 });
@@ -64,7 +69,7 @@ function randomFloatBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'temperature': randomFloatBetween(1, 101)
+        'temperature': randomFloatBetween(96, 104)
     };
     
     const device_data = { 
@@ -82,3 +87,16 @@ function getSensorData(deviceName) {
     
     return message;
 }
+
+device.on('message', function(topic, message) {
+    console.log("Message received on topic " + topic + ": " + message);
+    if(chargerTopic + deviceName == topic) {
+        if(message == 'true') {
+            isCharging = true;
+        } else if (message == 'false') {
+            isCharging = false;
+        } else {
+            console.log('Unknown value for charger status');
+        }
+    }
+});
