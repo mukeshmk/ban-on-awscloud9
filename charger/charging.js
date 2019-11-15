@@ -38,6 +38,9 @@ const rl = readline.createInterface({
 // Recursive function reading console input for TopicName
 function readConsoleInput() {
     rl.question('Enter device name to send the message to:\r\n', (destinationDeviceName) => {
+        if(destinationDeviceName == 'temp') {
+            destinationDeviceName = 'body-temperature-sensor'
+        }
         pubTopic = 'scalable/charger/' + destinationDeviceName;
         readMessage();
     });

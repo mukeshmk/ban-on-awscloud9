@@ -10,8 +10,9 @@ const endpointFile = require('/home/ec2-user/environment/endpoint.json');
 // Fetch the deviceName from the folder name
 const deviceName = __dirname.split('/').pop();
 
-// Charger Topic to subscribe to check for charge status
-const chargerTopic = 'scalable/charger/';
+// Topic names to subscribe too.
+const scalable = 'scalable/';
+const chargerTopic = scalable + 'charger/';
 
 // Create the thingShadow object with argument data
 const device = awsIoT.device({
@@ -29,7 +30,10 @@ var isCharging = false;
 device.on('connect', function() {
     console.log('Connected to AWS IoT');
     battery = 100.0;
+
+    // subscribing to 'scalable/charger/body-temperature-sensor'
     device.subscribe(chargerTopic + deviceName);
+
     // Start the publish loop
     infiniteLoopPublish();
 });
@@ -37,26 +41,37 @@ device.on('connect', function() {
 // Function to update battery status
 function updateBatteryStatus(dischargeRate, isCharging) {
     if(isCharging) {
-        battery+=1.0;
+        if(battery >= 100.0) {
+            console.log('battery fully charged!')
+        } else {
+            battery+=1.0;
+        }
     } else {
-        battery-=dischargeRate;
+        if(battery <= 0.0) {
+            console.log('battery fully discharged! shutting down device!')
+        } else {
+            battery-=dischargeRate;
+        }
     }
 }
 
+// TODO change the timeOut and dischargeRate after testing to proper values!
 // Function sending sensor telemetry data every 5 seconds
 function infiniteLoopPublish() {
     var timeOut;
-    var topic = "scalable/body-temperature-sensor";
-    console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
-    // Publish sensor data to scalable/body-temperature-sensor topic with getSensorData
+    var topic = scalable + deviceName;
+
     console.log('Battery of ' + deviceName + ' is ' + battery + '%');
     if(battery > 25) {
-        timeOut = 25000;
-    } else if(battery < 25) {
         timeOut = 5000;
+    } else if(battery < 25) {
+        timeOut = 2000;
     }
+
+    console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
+    // Publish sensor data to scalable/body-temperature-sensor topic with getSensorData
     device.publish(topic, JSON.stringify(getSensorData(deviceName)));
-    updateBatteryStatus(0.05, isCharging);
+    updateBatteryStatus(1, isCharging);
     // Start Infinite Loop of Publish every "timeOut" seconds
     setTimeout(infiniteLoopPublish, timeOut);
 }
@@ -89,14 +104,14 @@ function getSensorData(deviceName) {
 }
 
 device.on('message', function(topic, message) {
-    console.log("Message received on topic " + topic + ": " + message);
+    console.log("Message Received on Topic: " + topic + ": " + message);
     if(chargerTopic + deviceName == topic) {
         if(message == 'true') {
             isCharging = true;
         } else if (message == 'false') {
             isCharging = false;
         } else {
-            console.log('Unknown value for charger status');
+            console.log('Unknown value for charger status! not modifying the exisiting value!');
         }
     }
 });
