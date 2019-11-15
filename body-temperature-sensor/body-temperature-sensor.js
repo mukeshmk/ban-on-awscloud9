@@ -59,19 +59,22 @@ function updateBatteryStatus(dischargeRate, isCharging) {
 // Function sending sensor telemetry data every 5 seconds
 function infiniteLoopPublish() {
     var timeOut;
+    var dischargeRate;
     var topic = scalable + deviceName;
 
     console.log('Battery of ' + deviceName + ' is ' + battery + '%');
     if(battery > 25) {
         timeOut = 5000;
+        dischargeRate = 1;
     } else if(battery < 25) {
         timeOut = 2000;
+        dischargeRate = 0.4;
     }
 
     console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
     // Publish sensor data to scalable/body-temperature-sensor topic with getSensorData
     device.publish(topic, JSON.stringify(getSensorData(deviceName)));
-    updateBatteryStatus(1, isCharging);
+    updateBatteryStatus(dischargeRate, isCharging);
     // Start Infinite Loop of Publish every "timeOut" seconds
     setTimeout(infiniteLoopPublish, timeOut);
 }
