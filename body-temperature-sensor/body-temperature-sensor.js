@@ -12,7 +12,7 @@ const deviceName = __dirname.split('/').pop();
 
 // Topic names to subscribe too.
 const scalable = 'scalable/';
-const chargerTopic = scalable + 'charger/';
+const sinkTopic = scalable + 'sink/';
 
 // Create the thingShadow object with argument data
 const device = awsIoT.device({
@@ -31,8 +31,8 @@ device.on('connect', function() {
     console.log('Connected to AWS IoT');
     battery = 100.0;
 
-    // subscribing to 'scalable/charger/body-temperature-sensor'
-    device.subscribe(chargerTopic + deviceName);
+    // subscribing to 'scalable/sink/body-temperature-sensor'
+    device.subscribe(sinkTopic + deviceName);
 
     // Start the publish loop
     infiniteLoopPublish();
@@ -108,7 +108,7 @@ function getSensorData(deviceName) {
 
 device.on('message', function(topic, message) {
     console.log("Message Received on Topic: " + topic + ": " + message);
-    if(chargerTopic + deviceName == topic) {
+    if(sinkTopic + deviceName == topic) {
         if(message == 'true') {
             isCharging = true;
         } else if (message == 'false') {

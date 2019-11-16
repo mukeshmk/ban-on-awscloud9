@@ -41,7 +41,7 @@ function readConsoleInput() {
         if(destinationDeviceName == 'temp') {
             destinationDeviceName = 'body-temperature-sensor'
         }
-        pubTopic = 'scalable/charger/' + destinationDeviceName;
+        pubTopic = 'scalable/sink/' + destinationDeviceName;
         readMessage();
     });
 }
