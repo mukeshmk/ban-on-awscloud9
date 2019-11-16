@@ -37,42 +37,42 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-// Recursive function reading console input for TopicName
-function readConsoleInput() {
-    rl.question('Enter device name to send the message to:\r\n', (destinationDeviceName) => {
-        if(destinationDeviceName == 'temp') {
-            destinationDeviceName = 'body-temperature-sensor'
-        } else if (destinationDeviceName == 'heart' || destinationDeviceName == 'heat' ) {
-            destinationDeviceName = 'heart-beat-sensor'
-        }
-
-        pubTopic = sinkTopic + destinationDeviceName;
-        readMessage();
-    });
-}
-
-// Recursive function reading console input for message
-function readMessage() {
-    rl.question('Enter a message to send to ' + pubTopic + ':\r\n', function (message) {
-        // Calling function to publish to IoT Topic
-        publishToIoTTopic(pubTopic, message);
-        readConsoleInput();
-    });
-}
-
 // Function to publish payload to IoT topic
-function publishToIoTTopic(topic, payload) {
+function publishToSensorTopic(topic, payload) {
     // Publish to specified IoT topic using device object that you created
     device.publish(topic, payload);
 }
 
 device.on('connect', function() {
     console.log('Connected to AWS IoT as Sink!');
-    device.subscribe(sinkTopic + deviceName);
-    // Start reading from the console
-    readConsoleInput();
+    device.subscribe(sinkTopic);
 });
 
 device.on('message', function(topic, message) {
-    console.log("Message Received on Topic: " + topic + ": " + message);
+    var jMessage = JSON.parse(message);
+
+    var device = jMessage['device'];
+    var deviceBattery = jMessage['battery'];
+    var deviceLatitude = jMessage['latitude'];
+    var deviceLongitude = jMessage['longitude'];
+    var deviceDateTime = jMessage['datetime'];
+
+    console.log('Message Recevied from ' + device);
+    if(device == 'body-temperature-sensor') {
+        var temperature = jMessage['temperature'];
+    } else if(device == 'heart-beat-sensor') {
+        var systole = jMessage['systole'];
+        var distole = jMessage['distole'];
+        var beats = jMessage['beats'];
+    } else if(device == 'insulin-sensor') {
+        var glucoseLevel = jMessage['glucose-level'];
+    }
+
+    if(deviceBattery <= 25.0) {
+        publishToSensorTopic(sinkTopic + device, 'true');
+    } else if(deviceBattery >= 100.0) {
+        publishToSensorTopic(sinkTopic + device, 'false');
+    }
+
+    console.log('Message: ' + message);
 });

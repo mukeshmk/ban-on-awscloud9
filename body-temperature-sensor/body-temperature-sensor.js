@@ -42,13 +42,13 @@ device.on('connect', function() {
 function updateBatteryStatus(dischargeRate, isCharging) {
     if(isCharging) {
         if(battery >= 100.0) {
-            console.log('battery fully charged!')
+            console.log('battery fully charged!');
         } else {
             battery+=1.0;
         }
     } else {
         if(battery <= 0.0) {
-            console.log('battery fully discharged! shutting down device!')
+            console.log('battery fully discharged! shutting down device!');
         } else {
             battery-=dischargeRate;
         }

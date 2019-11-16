@@ -42,13 +42,13 @@ device.on('connect', function() {
 function updateBatteryStatus(dischargeRate, isCharging) {
     if(isCharging) {
         if(battery >= 100.0) {
-            console.log('battery fully charged!')
+            console.log('battery fully charged!');
         } else {
             battery+=1.0;
         }
     } else {
         if(battery <= 0.0) {
-            console.log('battery fully discharged! shutting down device!')
+            console.log('battery fully discharged! shutting down device!');
         } else {
             battery-=dischargeRate;
         }
@@ -72,7 +72,11 @@ function infiniteLoopPublish() {
 
     console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
     // Publish sensor data to scalable/heart-beat-sensor topic with getSensorData
-    device.publish(topic, JSON.stringify(getSensorData(deviceName)));
+    var data = JSON.stringify(getSensorData(deviceName));
+
+    device.publish(topic, data);
+    publishToSink(sinkTopic, data);
+
     updateBatteryStatus(dischargeRate, isCharging);
     // Start Infinite Loop of Publish every "timeOut" seconds
     setTimeout(infiniteLoopPublish, timeOut);
@@ -119,3 +123,7 @@ device.on('message', function(topic, message) {
         }
     }
 });
+
+function publishToSink(topic, payload) {
+    device.publish(topic, payload);
+}

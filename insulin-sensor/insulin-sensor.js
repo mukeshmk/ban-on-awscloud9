@@ -42,13 +42,13 @@ device.on('connect', function() {
 function updateBatteryStatus(dischargeRate, isCharging) {
     if(isCharging) {
         if(battery >= 100.0) {
-            console.log('battery fully charged!')
+            console.log('battery fully charged!');
         } else {
             battery+=1.0;
         }
     } else {
         if(battery <= 0.0) {
-            console.log('battery fully discharged! shutting down device!')
+            console.log('battery fully discharged! shutting down device!');
         } else {
             battery-=dischargeRate;
         }
@@ -73,7 +73,11 @@ function infiniteLoopPublish() {
 
     console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
     // Publish sensor data to scalable/insulin-sensor topic with getSensorData
-    device.publish(topic, JSON.stringify(getSensorData(deviceName)));
+    var data = JSON.stringify(getSensorData(deviceName));
+
+    device.publish(topic, data);
+    publishToSink(sinkTopic, data);
+
     updateBatteryStatus(dischargeRate, isCharging);
     // Start Infinite Loop of Publish every "timeOut" seconds
     setTimeout(infiniteLoopPublish, timeOut);
@@ -87,7 +91,7 @@ function randomFloatBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'glucose level': randomFloatBetween(3.9, 7.1)
+        'glucose-level': randomFloatBetween(3.9, 7.1)
     };
     
     const device_data = { 
@@ -108,7 +112,7 @@ function getSensorData(deviceName) {
 
 device.on('message', function(topic, message) {
     console.log("Message Received on Topic: " + topic + ": " + message);
-    if(chargerTopic + deviceName == topic) {
+    if(sinkTopic + deviceName == topic) {
         if(message == 'true') {
             isCharging = true;
         } else if (message == 'false') {
@@ -118,3 +122,7 @@ device.on('message', function(topic, message) {
         }
     }
 });
+
+function publishToSink(topic, payload) {
+    device.publish(topic, payload);
+}
