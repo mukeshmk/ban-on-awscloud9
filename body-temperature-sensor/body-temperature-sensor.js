@@ -73,7 +73,11 @@ function infiniteLoopPublish() {
 
     console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
     // Publish sensor data to scalable/body-temperature-sensor topic with getSensorData
-    device.publish(topic, JSON.stringify(getSensorData(deviceName)));
+    var data = JSON.stringify(getSensorData(deviceName));
+
+    device.publish(topic, data);
+    publishToSink(sinkTopic, data);
+
     updateBatteryStatus(dischargeRate, isCharging);
     // Start Infinite Loop of Publish every "timeOut" seconds
     setTimeout(infiniteLoopPublish, timeOut);
@@ -118,3 +122,7 @@ device.on('message', function(topic, message) {
         }
     }
 });
+
+function publishToSink(topic, payload) {
+    device.publish(topic, payload);
+}

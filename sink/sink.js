@@ -19,6 +19,8 @@ const host = endpointFile.endpointAddress;
 
 // publish topic name
 var pubTopic = '';
+const scalable = 'scalable/';
+const sinkTopic = scalable + 'sink/';
 
 // Use the awsIoT library to create device object using the constants created before
 const device = awsIoT.device({
@@ -40,8 +42,11 @@ function readConsoleInput() {
     rl.question('Enter device name to send the message to:\r\n', (destinationDeviceName) => {
         if(destinationDeviceName == 'temp') {
             destinationDeviceName = 'body-temperature-sensor'
+        } else if (destinationDeviceName == 'heart' || destinationDeviceName == 'heat' ) {
+            destinationDeviceName = 'heart-beat-sensor'
         }
-        pubTopic = 'scalable/sink/' + destinationDeviceName;
+
+        pubTopic = sinkTopic + destinationDeviceName;
         readMessage();
     });
 }
@@ -62,6 +67,12 @@ function publishToIoTTopic(topic, payload) {
 }
 
 device.on('connect', function() {
+    console.log('Connected to AWS IoT as Sink!');
+    device.subscribe(sinkTopic + deviceName);
     // Start reading from the console
     readConsoleInput();
+});
+
+device.on('message', function(topic, message) {
+    console.log("Message Received on Topic: " + topic + ": " + message);
 });
