@@ -63,7 +63,7 @@ function infiniteLoopPublish() {
     var topic = scalable + deviceName;
 
     console.log('Battery of ' + deviceName + ' is ' + battery + '%');
-    if(battery > 25) {
+    if(battery >= 25) {
         timeOut = 5000;
         dischargeRate = 1;
     } else if(battery < 25) {
