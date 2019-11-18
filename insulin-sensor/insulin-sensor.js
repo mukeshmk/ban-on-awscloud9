@@ -96,14 +96,15 @@ function getSensorData(deviceName) {
     
     const device_data = { 
         'insulin-sensor': {
-            'latitude':39.122229,
-            'longitude':-77.133578
+            'x':39,
+            'y':77
         }
     };
   
     message['battery'] = battery;
-    message['latitude'] = device_data[deviceName].latitude;
-    message['longitude'] = device_data[deviceName].longitude;
+    message['x'] = device_data[deviceName].x;
+    message['y'] = device_data[deviceName].y;
+    message['status'] = 'active';
     message['device'] = deviceName;
     message['datetime'] = new Date().toISOString().replace(/\..+/, '');
     

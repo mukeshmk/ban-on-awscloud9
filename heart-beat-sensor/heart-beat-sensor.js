@@ -92,19 +92,20 @@ function getSensorData(deviceName) {
     let message = {
         'systole': randomIntBetween(1, 101),
         'distole': randomIntBetween(101, 700),
-        'beats': randomIntBetween(65, 75)
+        'beats': randomIntBetween(65, 95)
     };
     
     const device_data = { 
         'heart-beat-sensor': {
-            'latitude':39.122229,
-            'longitude':-77.133578
+            'x':39,
+            'y':77
         }
     };
   
     message['battery'] = battery;
-    message['latitude'] = device_data[deviceName].latitude;
-    message['longitude'] = device_data[deviceName].longitude;
+    message['x'] = device_data[deviceName].x;
+    message['y'] = device_data[deviceName].y;
+    message['status'] = 'active';
     message['device'] = deviceName;
     message['datetime'] = new Date().toISOString().replace(/\..+/, '');
     

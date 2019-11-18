@@ -53,19 +53,42 @@ device.on('message', function(topic, message) {
 
     var device = jMessage['device'];
     var deviceBattery = jMessage['battery'];
-    var deviceLatitude = jMessage['latitude'];
-    var deviceLongitude = jMessage['longitude'];
+    var deviceX = jMessage['x'];
+    var deviceY = jMessage['y'];
     var deviceDateTime = jMessage['datetime'];
 
+    let msg = {
+        'sendMail': true
+    };
+
+    var sendMail = false;
     console.log('Message Recevied from ' + device);
     if(device == 'body-temperature-sensor') {
         var temperature = jMessage['temperature'];
+        if(temperature > 102) {
+            msg['metric'] = 'temperature';
+            msg['metricValue'] = temperature.toString();
+            msg['device'] = device;
+            sendMail = true;
+        }
     } else if(device == 'heart-beat-sensor') {
         var systole = jMessage['systole'];
         var distole = jMessage['distole'];
         var beats = jMessage['beats'];
+        if(beats > 80) {
+            msg['metric'] = 'beats';
+            msg['metricValue'] = beats.toString();
+            msg['device'] = device;
+            sendMail = true;
+        }
     } else if(device == 'insulin-sensor') {
         var glucoseLevel = jMessage['glucose-level'];
+        if(glucoseLevel > 6.5) {
+            msg['metric'] = 'glucose-level';
+            msg['metricValue'] = glucoseLevel.toString();
+            msg['device'] = device;
+            sendMail = true;
+        }
     }
 
     if(deviceBattery <= 25.0) {
@@ -74,5 +97,7 @@ device.on('message', function(topic, message) {
         publishToSensorTopic(sinkTopic + device, 'false');
     }
 
-    console.log('Message: ' + message);
+    if(sendMail) {
+        publishToSensorTopic(scalable + 'email', JSON.stringify(msg));
+    }
 });
