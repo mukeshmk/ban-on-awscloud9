@@ -83,7 +83,6 @@ device.on('message', function(topic, message) {
     var deviceY = jMessage['y'];
 
     var nearestPeer = 'none';
-    console.log('Message Recevied from ' + device);
 
     if(deviceStatus == 'dead') {
         prevCoord[device] = [prevCoord[device][0], prevCoord[device][1], deviceStatus];
@@ -97,5 +96,5 @@ device.on('message', function(topic, message) {
     } else if(device == 'insulin-sensor') {
         nearestPeer = nearestNode(device, deviceX, deviceY, deviceStatus);
     }
-    console.log('Message: ' + nearestPeer);
+    console.log('Message Recevied from ' + device + ' and nearestNode: ' + nearestPeer);
 });

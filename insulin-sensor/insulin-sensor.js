@@ -100,8 +100,12 @@ function infiniteLoopPublish() {
 }
 
 // Function to create a random float between minValue and maxValue
-function randomIntBetween(minValue,maxValue){
-    return parseInt(Math.floor(Math.min(minValue + (Math.random() * (maxValue - minValue)),maxValue)));
+function randomIntBetween(minValue, maxValue){
+    return parseInt(Math.floor(Math.min(minValue + (Math.random() * (maxValue - minValue)), maxValue)));
+}
+
+function randomFloatBetween(minValue, maxValue) {
+    return parseFloat(Math.min(minValue + (Math.random() * (maxValue - minValue)), maxValue));
 }
 
 // Generate random sensor data based on the deviceName
