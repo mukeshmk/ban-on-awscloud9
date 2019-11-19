@@ -1,9 +1,6 @@
 // Require AWS IoT Device SDK
 const awsIoT = require('aws-iot-device-sdk');
 
-// Require crypto for random numbers generation
-const crypto = require('crypto');
-
 // Load the endpoint from file
 const endpointFile = require('/home/ec2-user/environment/endpoint.json');
 
@@ -24,14 +21,16 @@ const device = awsIoT.device({
 });
 
 var battery;
+var status;
 var isCharging = false;
 
 // Function that gets executed when the connection to IoT is established
 device.on('connect', function() {
     console.log('Connected to AWS IoT');
     battery = 100.0;
+    status = 'active';
 
-    // subscribing to 'scalable/sink/body-temperature-sensor'
+    // subscribing to 'scalable/sink/body-temperature-sensor' for charger notifications.
     device.subscribe(sinkTopic + deviceName);
 
     // Start the publish loop
@@ -42,75 +41,93 @@ device.on('connect', function() {
 function updateBatteryStatus(dischargeRate, isCharging) {
     if(isCharging) {
         if(battery >= 100.0) {
+            battery = 100;
             console.log('battery fully charged!');
         } else {
+            status = 'active';
             battery+=1.0;
         }
     } else {
+        if(status == 'dead') {
+            return;
+        }
+
         if(battery <= 0.0) {
+            battery = 0;
+            status = 'dead';
             console.log('battery fully discharged! shutting down device!');
+        } else if(battery <= 50.0) {
+            status = 'sleep';
+            battery-=dischargeRate/2;
         } else {
+            status = 'active';
             battery-=dischargeRate;
         }
     }
 }
 
-// TODO change the timeOut and dischargeRate after testing to proper values!
 // Function sending sensor telemetry data every 5 seconds
 function infiniteLoopPublish() {
     var timeOut;
     var dischargeRate;
-    var topic = scalable + deviceName;
 
-    console.log('Battery of ' + deviceName + ' is ' + battery + '%');
-    if(battery >= 25) {
-        timeOut = 5000;
-        dischargeRate = 1;
-    } else if(battery < 25) {
-        timeOut = 2000;
-        dischargeRate = 0.4;
+    if(status == 'dead') {
+        publishToTopic(sinkTopic, JSON.stringify(getSensorData(deviceName)));
+        updateBatteryStatus(0, isCharging);
+        setTimeout(infiniteLoopPublish, 2000);
+    } else {
+        console.log('Battery of ' + deviceName + ' is ' + battery + '%');
+        if(status == 'active') {
+            timeOut = 5000;
+            dischargeRate = 1;
+        } else if(status == 'sleep') {
+            timeOut = 10000;
+            dischargeRate = 1;
+        } else if(status == 'dead') {
+            dischargeRate = 0;
+        }
+
+        var data = JSON.stringify(getSensorData(deviceName));
+
+        console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
+        // Publish sensor data to scalable/sink topic
+        publishToTopic(sinkTopic, data);
+
+        updateBatteryStatus(dischargeRate, isCharging);
+        // Start Infinite Loop of Publish every "timeOut" seconds
+        setTimeout(infiniteLoopPublish, timeOut);
     }
-
-    console.log('Sending sensor telemetry data to AWS IoT for ' + deviceName);
-    // Publish sensor data to scalable/body-temperature-sensor topic with getSensorData
-    var data = JSON.stringify(getSensorData(deviceName));
-
-    device.publish(topic, data);
-    publishToSink(sinkTopic, data);
-
-    updateBatteryStatus(dischargeRate, isCharging);
-    // Start Infinite Loop of Publish every "timeOut" seconds
-    setTimeout(infiniteLoopPublish, timeOut);
 }
 
 // Function to create a random float between minValue and maxValue
-function randomFloatBetween(minValue,maxValue){
+function randomIntBetween(minValue,maxValue){
     return parseInt(Math.floor(Math.min(minValue + (Math.random() * (maxValue - minValue)),maxValue)));
 }
 
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'temperature': randomFloatBetween(96, 104)
+        'temperature': randomIntBetween(96, 104)
     };
     
     const device_data = { 
         'body-temperature-sensor': {
-            'x':39,
-            'y':77
+            'x': randomIntBetween(30, 40),
+            'y': randomIntBetween(30, 40)
         }
     };
   
     message['battery'] = battery;
     message['x'] = device_data[deviceName].x;
     message['y'] = device_data[deviceName].y;
-    message['status'] = 'active';
+    message['status'] = status;
     message['device'] = deviceName;
     message['datetime'] = new Date().toISOString().replace(/\..+/, '');
     
     return message;
 }
 
+// currently only recives charger related information
 device.on('message', function(topic, message) {
     console.log("Message Received on Topic: " + topic + ": " + message);
     if(sinkTopic + deviceName == topic) {
@@ -124,6 +141,6 @@ device.on('message', function(topic, message) {
     }
 });
 
-function publishToSink(topic, payload) {
+function publishToTopic(topic, payload) {
     device.publish(topic, payload);
 }
