@@ -1,6 +1,3 @@
-// Require readline for input from the console
-const readline = require('readline');
-
 // Require AWS IoT Device SDK
 const awsIoT = require('aws-iot-device-sdk');
 
@@ -18,13 +15,13 @@ const clientId = deviceName;
 const host = endpointFile.endpointAddress;
 
 // publish topic name
-var pubTopic = '';
 const scalable = 'scalable/';
 const serverTopic = scalable + 'sink/';
 
 var prevCoord = {
-    "body-temperature-sensor" : [0, 0, 'active'],
-    "heart-beat-sensor" : [0, 0, 'dead'],
+    "sink" : [0, 0, 'active'],
+    "body-temperature-sensor" : [0, 0, 'sleep'],
+    "heart-beat-sensor" : [0, 0, 'sleep'],
     "insulin-sensor" : [0, 0, 'sleep']
 }
 
@@ -37,14 +34,8 @@ const device = awsIoT.device({
       host: host
 });
 
-// Interface for console input
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
 // Function to publish payload to IoT topic
-function publishToSensorTopic(topic, payload) {
+function publishToTopic(topic, payload) {
     // Publish to specified IoT topic using device object that you created
     device.publish(topic, payload);
 }
@@ -55,17 +46,17 @@ device.on('connect', function() {
 });
 
 function nearestNode(device, x, y, status) {
-    var nearestPeer = 'none';
+    var nearestPeer = 'sink';
     prevCoord[device] = [x, y, status];
     var dist = 0;
-    var minDist = 0;
+    var minDist = Infinity;
     for(var dev in prevCoord) {
         if(dev != device) {
-            if(prevCoord[dev][2] != 'active') {
+            if(prevCoord[dev][2] == 'sleep' || prevCoord[dev][2] == 'dead') {
                 continue;
             }
             dist = Math.pow((prevCoord[dev][0] - x), 2) + Math.pow((prevCoord[dev][1] - y), 2);
-            if(minDist < dist) {
+            if(minDist > dist) {
                 minDist = dist;
                 nearestPeer = dev;
             }
@@ -82,9 +73,9 @@ device.on('message', function(topic, message) {
     var deviceX = jMessage['x'];
     var deviceY = jMessage['y'];
 
-    var nearestPeer = 'none';
+    var nearestPeer = 'sink';
 
-    if(deviceStatus == 'dead') {
+    if(deviceStatus == 'dead' || deviceStatus == 'sleep') {
         prevCoord[device] = [prevCoord[device][0], prevCoord[device][1], deviceStatus];
         return nearestPeer;
     }

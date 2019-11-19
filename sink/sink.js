@@ -1,6 +1,3 @@
-// Require readline for input from the console
-const readline = require('readline');
-
 // Require AWS IoT Device SDK
 const awsIoT = require('aws-iot-device-sdk');
 
@@ -18,7 +15,6 @@ const clientId = deviceName;
 const host = endpointFile.endpointAddress;
 
 // publish topic name
-var pubTopic = '';
 const scalable = 'scalable/';
 const sinkTopic = scalable + 'sink/';
 
@@ -31,14 +27,8 @@ const device = awsIoT.device({
       host: host
 });
 
-// Interface for console input
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
 // Function to publish payload to IoT topic
-function publishToSensorTopic(topic, payload) {
+function publishToTopic(topic, payload) {
     // Publish to specified IoT topic using device object that you created
     device.publish(topic, payload);
 }
@@ -92,12 +82,13 @@ device.on('message', function(topic, message) {
     }
 
     if(deviceBattery <= 25.0) {
-        publishToSensorTopic(sinkTopic + device, 'true');
+        publishToTopic(sinkTopic + device, 'true');
     } else if(deviceBattery >= 100.0) {
-        publishToSensorTopic(sinkTopic + device, 'false');
+        publishToTopic(sinkTopic + device, 'false');
     }
 
-    if(sendMail) {
-        publishToSensorTopic(scalable + 'email', JSON.stringify(msg));
+    // dev mode ON!!
+    if(sendMail && false) {
+        publishToTopic(scalable + 'email', JSON.stringify(msg));
     }
 });

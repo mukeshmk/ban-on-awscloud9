@@ -57,7 +57,11 @@ function updateBatteryStatus(dischargeRate, isCharging) {
             status = 'dead';
             console.log('battery fully discharged! shutting down device!');
         } else if(battery <= 50.0) {
-            status = 'sleep';
+            if(status == 'sleep') {
+                status = 'awake';
+            } else {
+                status = 'sleep';
+            }
             battery-=dischargeRate/2;
         } else {
             status = 'active';
@@ -80,7 +84,7 @@ function infiniteLoopPublish() {
         if(status == 'active') {
             timeOut = 5000;
             dischargeRate = 1;
-        } else if(status == 'sleep') {
+        } else if(status == 'sleep' || status == 'awake') {
             timeOut = 10000;
             dischargeRate = 1;
         } else if(status == 'dead') {
@@ -90,6 +94,7 @@ function infiniteLoopPublish() {
         var data = JSON.stringify(getSensorData(deviceName));
 
         console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
+        console.log('Battery: ' + battery +' Status: ' + status);
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
