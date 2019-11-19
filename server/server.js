@@ -55,7 +55,7 @@ function nearestNode(device, x, y, status) {
             if(prevCoord[dev][2] == 'sleep' || prevCoord[dev][2] == 'dead') {
                 continue;
             }
-            dist = Math.pow((prevCoord[dev][0] - x), 2) + Math.pow((prevCoord[dev][1] - y), 2);
+            dist = Math.sqrt(Math.pow((prevCoord[dev][0] - x), 2) + Math.pow((prevCoord[dev][1] - y), 2));
             if(minDist > dist) {
                 minDist = dist;
                 nearestPeer = dev;
