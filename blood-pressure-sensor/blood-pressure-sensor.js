@@ -10,6 +10,8 @@ const deviceName = __dirname.split('/').pop();
 // Topic names to subscribe too.
 const scalable = 'scalable/';
 const sinkTopic = scalable + 'sink/';
+const dump = '/dump';
+const dumprev = dump + '/receive';
 
 // Create the thingShadow object with argument data
 const device = awsIoT.device({
@@ -32,6 +34,10 @@ device.on('connect', function() {
 
     // subscribing to 'scalable/sink/blood-pressure-sensor' for charger notifications.
     device.subscribe(sinkTopic + deviceName);
+    // subscribling to 'scalable/blood-pressure-sensor/dump' for notficiation about which node to dump too.
+    device.subscribe(scalable + deviceName + dump);
+    // subscribling to 'scalable/blood-pressure-sensor/dump/receive' for notficiation about being the dump node.
+    device.subscribe(scalable + deviceName + dumprev);
 
     // Start the publish loop
     infiniteLoopPublish();
@@ -93,7 +99,9 @@ function infiniteLoopPublish() {
 
         var data = JSON.stringify(getSensorData(deviceName));
 
-        console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
+        if(status == 'active' || status == 'awake') {
+            console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
+        }
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
@@ -145,6 +153,11 @@ device.on('message', function(topic, message) {
         } else {
             console.log('Unknown value for charger status! not modifying the exisiting value!');
         }
+    } else if(scalable + deviceName + dump == topic) {
+        console.log('Battery about to die dumping local data to nearest node!: ' + message);
+        publishToTopic(scalable + message + dumprev, deviceName);
+    } else if(scalable + deviceName + dumprev == topic) {
+        console.log('Recived data dump from ' + message + ' as it\'s battery is about to die');
     }
 });
 

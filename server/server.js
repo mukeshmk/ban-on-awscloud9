@@ -17,12 +17,16 @@ const host = endpointFile.endpointAddress;
 // publish topic name
 const scalable = 'scalable/';
 const serverTopic = scalable + 'sink/';
+const dump = '/dump';
 
 var prevCoord = {
     "sink" : [0, 0, 'active'],
+    "blood-pressure-sensor" : [0, 0, 'sleep'],
     "body-temperature-sensor" : [0, 0, 'sleep'],
     "heart-beat-sensor" : [0, 0, 'sleep'],
-    "insulin-sensor" : [0, 0, 'sleep']
+    "insulin-sensor" : [0, 0, 'sleep'],
+    "ph-value-sensor" : [0, 0, 'sleep'],
+    "pulse-oximeter-sensor" : [0, 0, 'sleep']
 }
 
 // Use the awsIoT library to create device object using the constants created before
@@ -69,6 +73,7 @@ device.on('message', function(topic, message) {
     var jMessage = JSON.parse(message);
 
     var device = jMessage['device'];
+    var deviceBattery = jMessage['battery'];
     var deviceStatus = jMessage['status'];
     var deviceX = jMessage['x'];
     var deviceY = jMessage['y'];
@@ -78,14 +83,14 @@ device.on('message', function(topic, message) {
     if(deviceStatus == 'dead' || deviceStatus == 'sleep') {
         prevCoord[device] = [prevCoord[device][0], prevCoord[device][1], deviceStatus];
         return nearestPeer;
+    } else {
+        prevCoord[device] = [deviceX, deviceY, deviceStatus];
     }
 
-    if(device == 'body-temperature-sensor') {
+    if(deviceBattery <= 5) {
         nearestPeer = nearestNode(device, deviceX, deviceY, deviceStatus);
-    } else if(device == 'heart-beat-sensor') {
-        nearestPeer = nearestNode(device, deviceX, deviceY, deviceStatus);
-    } else if(device == 'insulin-sensor') {
-        nearestPeer = nearestNode(device, deviceX, deviceY, deviceStatus);
+        console.log('Message Recevied from ' + device + ' and nearestNode: ' + nearestPeer);
+
+        publishToTopic(scalable + device + dump, nearestPeer);
     }
-    console.log('Message Recevied from ' + device + ' and nearestNode: ' + nearestPeer);
 });
