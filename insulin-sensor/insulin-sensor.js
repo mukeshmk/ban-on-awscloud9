@@ -116,7 +116,7 @@ function randomFloatBetween(minValue, maxValue) {
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'glucose-level': randomFloatBetween(3.9, 7.1)
+        'glucose-level': randomFloatBetween(3.5, 8.5)// more than 8 and leas than 4 dangerous - normal is 4 - 5.4
     };
     
     const device_data = { 

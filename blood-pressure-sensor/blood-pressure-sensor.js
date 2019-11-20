@@ -30,7 +30,7 @@ device.on('connect', function() {
     battery = 100.0;
     status = 'active';
 
-    // subscribing to 'scalable/sink/body-temperature-sensor' for charger notifications.
+    // subscribing to 'scalable/sink/blood-pressure-sensor' for charger notifications.
     device.subscribe(sinkTopic + deviceName);
 
     // Start the publish loop
@@ -112,13 +112,16 @@ function randomIntBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'temperature': randomIntBetween(94, 106) // less than 97 and more than 101 is bad
+        // 'systole': randomIntBetween(90,120),
+        // 'diastole': randomIntBetween(60,80),
+        'blood-pressure' : randomIntBetween(90,120) + '/' + randomIntBetween(60,80)
     };
+
     
     const device_data = { 
-        'body-temperature-sensor': {
-            'x': randomIntBetween(30, 40),
-            'y': randomIntBetween(30, 40)
+        'blood-pressure-sensor': {
+            'x': randomIntBetween(40, 50),
+            'y': randomIntBetween(40, 50)
         }
     };
   

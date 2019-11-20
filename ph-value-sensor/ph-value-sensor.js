@@ -30,7 +30,7 @@ device.on('connect', function() {
     battery = 100.0;
     status = 'active';
 
-    // subscribing to 'scalable/sink/body-temperature-sensor' for charger notifications.
+    // subscribing to 'scalable/sink/ph-value-sensor' for charger notifications.
     device.subscribe(sinkTopic + deviceName);
 
     // Start the publish loop
@@ -104,19 +104,24 @@ function infiniteLoopPublish() {
     }
 }
 
-// Function to create a random float between minValue and maxValue
+// Function to create a random int between minValue and maxValue
 function randomIntBetween(minValue,maxValue){
     return parseInt(Math.floor(Math.min(minValue + (Math.random() * (maxValue - minValue)),maxValue)));
+}
+
+// Function to create a random float between minValue and maxValue
+function randomFloatBetween(minValue,maxValue){
+    return parseFloat(Math.min(minValue + (Math.random() * (maxValue - minValue)),maxValue));
 }
 
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'temperature': randomIntBetween(94, 106) // less than 97 and more than 101 is bad
+        'ph-value': randomFloatBetween(7.20, 7.60) // normal ph value- 7.35 - 7.45
     };
     
     const device_data = { 
-        'body-temperature-sensor': {
+        'ph-value-sensor': {
             'x': randomIntBetween(30, 40),
             'y': randomIntBetween(30, 40)
         }

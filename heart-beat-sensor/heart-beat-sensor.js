@@ -112,9 +112,7 @@ function randomIntBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'systole': randomIntBetween(1, 101),
-        'distole': randomIntBetween(101, 700),
-        'beats': randomIntBetween(65, 95)
+        'beats': randomIntBetween(60, 95)
     };
 
     

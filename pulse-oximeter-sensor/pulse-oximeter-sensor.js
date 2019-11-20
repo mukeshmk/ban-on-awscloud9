@@ -30,7 +30,7 @@ device.on('connect', function() {
     battery = 100.0;
     status = 'active';
 
-    // subscribing to 'scalable/sink/body-temperature-sensor' for charger notifications.
+    // subscribing to 'scalable/sink/pulse-oximeter-sensor' for charger notifications.
     device.subscribe(sinkTopic + deviceName);
 
     // Start the publish loop
@@ -112,13 +112,13 @@ function randomIntBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'temperature': randomIntBetween(94, 106) // less than 97 and more than 101 is bad
+        'oxygen-saturation': randomIntBetween(85, 100) // less that 88 is dangerous
     };
     
     const device_data = { 
-        'body-temperature-sensor': {
-            'x': randomIntBetween(30, 40),
-            'y': randomIntBetween(30, 40)
+        'pulse-oximeter-sensor': {
+            'x': randomIntBetween(50, 60),
+            'y': randomIntBetween(50, 60)
         }
     };
   
