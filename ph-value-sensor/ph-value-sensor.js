@@ -94,7 +94,6 @@ function infiniteLoopPublish() {
         var data = JSON.stringify(getSensorData(deviceName));
 
         console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
-        console.log('Battery: ' + battery +' Status: ' + status);
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
@@ -117,7 +116,7 @@ function randomFloatBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'ph-value': randomFloatBetween(7.20, 7.60) // normal ph value- 7.35 - 7.45
+        'ph-value': randomFloatBetween(7.25, 7.55) // normal ph value- 7.35 - 7.45
     };
     
     const device_data = { 

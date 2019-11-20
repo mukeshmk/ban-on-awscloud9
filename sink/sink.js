@@ -33,6 +33,9 @@ function publishToTopic(topic, payload) {
     device.publish(topic, payload);
 }
 
+// additional variable used for debugging and functionality overriding!
+var devmode = true;
+
 device.on('connect', function() {
     console.log('Connected to AWS IoT as Sink!');
     device.subscribe(sinkTopic);
@@ -48,7 +51,8 @@ device.on('message', function(topic, message) {
     var deviceDateTime = jMessage['datetime'];
 
     let msg = {
-        'sendMail': true
+        'sendMail': true,
+        'device': device
     };
 
     var sendMail = false;
@@ -58,17 +62,13 @@ device.on('message', function(topic, message) {
         if(temperature > 102) {
             msg['metric'] = 'temperature';
             msg['metricValue'] = temperature.toString();
-            msg['device'] = device;
             sendMail = true;
         }
     } else if(device == 'heart-beat-sensor') {
-        var systole = jMessage['systole'];
-        var distole = jMessage['distole'];
         var beats = jMessage['beats'];
         if(beats > 80) {
             msg['metric'] = 'beats';
             msg['metricValue'] = beats.toString();
-            msg['device'] = device;
             sendMail = true;
         }
     } else if(device == 'insulin-sensor') {
@@ -76,7 +76,28 @@ device.on('message', function(topic, message) {
         if(glucoseLevel > 6.5) {
             msg['metric'] = 'glucose-level';
             msg['metricValue'] = glucoseLevel.toString();
-            msg['device'] = device;
+            sendMail = true;
+        }
+    } else if(device == 'blood-pressure-sensor') {
+        var bloodPressure = jMessage['blood-pressure'];
+        [systole, diastole] = bloodPressure.split('/');
+        if(systole < 95 || systole > 115 || diastole < 65 || diastole > 75) {
+            msg['metric'] = 'blood-pressure';
+            msg['metricValue'] = bloodPressure.toString();
+            sendMail = true;
+        }
+    } else if(device == 'ph-value-sensor') {
+        var phValue = jMessage['ph-value'];
+        if(phValue < 7.35 || phValue > 7.45) {
+            msg['metric'] = 'ph-value';
+            msg['metricValue'] = phValue.toString();
+            sendMail = true;
+        }
+    } else if(device == 'pulse-oximeter-sensor') {
+        var oxygenSaturation = jMessage['oxygen-saturation'];
+        if(oxygenSaturation < 88) {
+            msg['metric'] = 'oxygen-saturation';
+            msg['metricValue'] = oxygenSaturation.toString();
             sendMail = true;
         }
     }
@@ -87,8 +108,10 @@ device.on('message', function(topic, message) {
         publishToTopic(sinkTopic + device, 'false');
     }
 
-    // dev mode ON!!
-    if(sendMail && false) {
+    if(sendMail && devmode) {
+        console.log('dev mode on!: not sending an email for sensor value inconsistency');
+    }
+    if(sendMail && !devmode) {
         publishToTopic(scalable + 'email', JSON.stringify(msg));
     }
 });

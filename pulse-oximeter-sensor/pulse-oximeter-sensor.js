@@ -94,7 +94,6 @@ function infiniteLoopPublish() {
         var data = JSON.stringify(getSensorData(deviceName));
 
         console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
-        console.log('Battery: ' + battery +' Status: ' + status);
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
