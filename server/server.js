@@ -22,11 +22,14 @@ const dump = '/dump';
 var prevCoord = {
     "sink" : [0, 0, 'active'],
     "blood-pressure-sensor" : [0, 0, 'sleep'],
+    "ecg-sensor" : [0, 0, 'sleep'],
     "body-temperature-sensor" : [0, 0, 'sleep'],
     "heart-beat-sensor" : [0, 0, 'sleep'],
     "insulin-sensor" : [0, 0, 'sleep'],
+    "lactic-sensor" : [0, 0, 'sleep'],
     "ph-value-sensor" : [0, 0, 'sleep'],
-    "pulse-oximeter-sensor" : [0, 0, 'sleep']
+    "pulse-oximeter-sensor" : [0, 0, 'sleep'],
+    "respirratory-monitor-sensor" : [0, 0, 'sleep']
 }
 
 // Use the awsIoT library to create device object using the constants created before

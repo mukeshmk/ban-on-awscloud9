@@ -100,6 +100,27 @@ device.on('message', function(topic, message) {
             msg['metricValue'] = oxygenSaturation.toString();
             sendMail = true;
         }
+    } else if(device == 'lactic-acid-sensor') {
+        var lacticAcid = jMessage['lactic-acid'];
+        if(lacticAcid < 120 || lacticAcid > 200) {
+            msg['metric'] = 'lactic-acid';
+            msg['metricValue'] = lacticAcid.toString();
+            sendMail = true;
+        }
+    } else if(device == 'respiratory-monitor-sensor') {
+        var respiratoryMonitor = jMessage['respiratory-monitor'];
+        if(respiratoryMonitor < 14 || respiratoryMonitor > 27) {
+            msg['metric'] = 'respiratory-monitor';
+            msg['metricValue'] = respiratoryMonitor.toString();
+            sendMail = true;
+        }
+    } else if(device == 'ecg-sensor') {
+        var ecg = jMessage['ecg'];
+        if(ecg < 120 || ecg > 200) {
+            msg['metric'] = 'ecg';
+            msg['metricValue'] = ecg.toString();
+            sendMail = true;
+        }
     }
 
     if(deviceBattery <= 25.0) {
