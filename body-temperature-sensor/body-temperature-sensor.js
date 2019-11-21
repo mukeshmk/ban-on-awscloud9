@@ -16,11 +16,11 @@ const dumprev = dump + '/receive';
 
 // Create the thingShadow object with argument data
 const device = awsIoT.device({
-   keyPath: 'private.pem.key',
-  certPath: 'certificate.pem.crt',
+    keyPath: 'private.pem.key',
+    certPath: 'certificate.pem.crt',
     caPath: '/home/ec2-user/environment/root-CA.crt',
-  clientId: deviceName,
-      host: endpointFile.endpointAddress
+    clientId: deviceName,
+    host: endpointFile.endpointAddress
 });
 
 var battery;
@@ -28,7 +28,7 @@ var status;
 var isCharging = false;
 
 // Function that gets executed when the connection to IoT is established
-device.on('connect', function() {
+device.on('connect', function () {
     console.log('Connected to AWS IoT');
     battery = 100.0;
     status = 'active';
@@ -48,33 +48,33 @@ device.on('connect', function() {
 
 // Function to update battery status
 function updateBatteryStatus(dischargeRate, isCharging) {
-    if(isCharging) {
-        if(battery >= 100.0) {
+    if (isCharging) {
+        if (battery >= 100.0) {
             battery = 100;
             console.log('battery fully charged!');
         } else {
             status = 'active';
-            battery+=1.0;
+            battery += 1.0;
         }
     } else {
-        if(status == 'dead') {
+        if (status == 'dead') {
             return;
         }
 
-        if(battery <= 0.0) {
+        if (battery <= 0.0) {
             battery = 0;
             status = 'dead';
             console.log('battery fully discharged! shutting down device!');
-        } else if(battery <= 50.0) {
-            if(status == 'sleep') {
+        } else if (battery <= 50.0) {
+            if (status == 'sleep') {
                 status = 'awake';
             } else {
                 status = 'sleep';
             }
-            battery-=dischargeRate/2;
+            battery -= dischargeRate / 2;
         } else {
             status = 'active';
-            battery-=dischargeRate;
+            battery -= dischargeRate;
         }
     }
 }
@@ -84,27 +84,24 @@ function infiniteLoopPublish() {
     var timeOut;
     var dischargeRate;
 
-    if(status == 'dead') {
+    if (status == 'dead') {
         publishToTopic(sinkTopic, JSON.stringify(getSensorData(deviceName)));
         updateBatteryStatus(0, isCharging);
         setTimeout(infiniteLoopPublish, 2000);
     } else {
         console.log('Battery of ' + deviceName + ' is ' + battery + '%');
-        if(status == 'active') {
+        if (status == 'active') {
             timeOut = 5000;
             dischargeRate = 1;
-        } else if(status == 'sleep' || status == 'awake') {
+        } else if (status == 'sleep' || status == 'awake') {
             timeOut = 10000;
             dischargeRate = 1;
-        } else if(status == 'dead') {
+        } else if (status == 'dead') {
             dischargeRate = 0;
         }
 
         var data = JSON.stringify(getSensorData(deviceName));
 
-        if(status == 'active' || status == 'awake') {
-            console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
-        }
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
@@ -115,8 +112,8 @@ function infiniteLoopPublish() {
 }
 
 // Function to create a random float between minValue and maxValue
-function randomIntBetween(minValue,maxValue){
-    return parseInt(Math.floor(Math.min(minValue + (Math.random() * (maxValue - minValue)),maxValue)));
+function randomIntBetween(minValue, maxValue) {
+    return parseInt(Math.floor(Math.min(minValue + (Math.random() * (maxValue - minValue)), maxValue)));
 }
 
 // Generate random sensor data based on the deviceName
@@ -124,45 +121,47 @@ function getSensorData(deviceName) {
     let message = {
         'temperature': randomIntBetween(94, 106) // less than 97 and more than 101 is bad
     };
-    
-    const device_data = { 
+
+    const device_data = {
         'body-temperature-sensor': {
             'x': randomIntBetween(30, 40),
             'y': randomIntBetween(30, 40)
         }
     };
-  
+
     message['battery'] = battery;
     message['x'] = device_data[deviceName].x;
     message['y'] = device_data[deviceName].y;
     message['status'] = status;
     message['device'] = deviceName;
     message['datetime'] = new Date().toISOString().replace(/\..+/, '');
-    
+
     return message;
 }
 
-device.on('message', function(topic, message) {
+device.on('message', function (topic, message) {
     console.log("Message Received on Topic: " + topic + ": " + message);
-    if(sinkTopic + deviceName == topic) {
-        if(message == 'true') {
+    if (sinkTopic + deviceName == topic) {
+        if (message == 'true') {
             isCharging = true;
         } else if (message == 'false') {
             isCharging = false;
         } else {
             console.log('Unknown value for charger status! not modifying the exisiting value!');
         }
-    } else if(scalable + deviceName + dump == topic) {
+    } else if (scalable + deviceName + dump == topic) {
         console.log('Battery about to die dumping local data to nearest node!: ' + message);
         publishToTopic(scalable + message + dumprev, deviceName);
-    } else if(scalable + deviceName + dumprev == topic) {
+    } else if (scalable + deviceName + dumprev == topic) {
         console.log('Recived data dump from ' + message + ' as it\'s battery is about to die');
     } else if (serverTopic + deviceName == topic) {
-        jMessage = JSON.parse(message);
+        var jMessage = JSON.parse(message);
         var route = jMessage['route'];
         var srcSensor = jMessage['src-sensor'];
         var destSensor = jMessage['dest-sensor'];
-        console.log(route);
+        if (status == 'active' || status == 'awake') {
+            console.log('Sending sensor telemetry data to BAN\'s ' + destSensor + ' for ' + srcSensor + ' via: ' + route);
+        }
     }
 });
 
