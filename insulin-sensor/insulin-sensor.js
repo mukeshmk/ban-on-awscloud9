@@ -10,6 +10,7 @@ const deviceName = __dirname.split('/').pop();
 // Topic names to subscribe too.
 const scalable = 'scalable/';
 const sinkTopic = scalable + 'sink/';
+const serverTopic = scalable + 'server/';
 const dump = '/dump';
 const dumprev = dump + '/receive';
 
@@ -38,6 +39,8 @@ device.on('connect', function() {
     device.subscribe(scalable + deviceName + dump);
     // subscribling to 'scalable/insulin-sensor/dump/receive' for notficiation about being the dump node.
     device.subscribe(scalable + deviceName + dumprev);
+    // subscribing to 'scalable/server/insulin-sensor' for info about the routing.
+    device.subscribe(serverTopic + deviceName);
 
     // Start the publish loop
     infiniteLoopPublish();
@@ -99,9 +102,6 @@ function infiniteLoopPublish() {
 
         var data = JSON.stringify(getSensorData(deviceName));
 
-        if(status == 'active' || status == 'awake') {
-            console.log('Sending sensor telemetry data to BAN\'s Sink for ' + deviceName);
-        }
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
@@ -158,6 +158,14 @@ device.on('message', function(topic, message) {
         publishToTopic(scalable + message + dumprev, deviceName);
     } else if(scalable + deviceName + dumprev == topic) {
         console.log('Recived data dump from ' + message + ' as it\'s battery is about to die');
+    } else if (serverTopic + deviceName == topic) {
+        var jMessage = JSON.parse(message);
+        var route = jMessage['route'];
+        var srcSensor = jMessage['src-sensor'];
+        var destSensor = jMessage['dest-sensor'];
+        if (status == 'active' || status == 'awake') {
+            console.log('Sending sensor telemetry data to BAN\'s ' + destSensor + ' for ' + srcSensor + ' via: ' + route);
+        }
     }
 });
 
