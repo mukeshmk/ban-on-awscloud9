@@ -16,29 +16,30 @@ const host = endpointFile.endpointAddress;
 
 // publish topic name
 const scalable = 'scalable/';
-const serverTopic = scalable + 'sink/';
-const dump = '/dump';
+const serverTopic = scalable + 'server/';
+const sinkTopic = scalable + 'sink/';
+const nearestSensor = 'nearestSensor/';
 
 var prevCoord = {
-    "sink" : [0, 0, 'active'],
-    "blood-pressure-sensor" : [0, 0, 'sleep'],
-    "ecg-sensor" : [0, 0, 'sleep'],
-    "body-temperature-sensor" : [0, 0, 'sleep'],
-    "heart-beat-sensor" : [0, 0, 'sleep'],
-    "insulin-sensor" : [0, 0, 'sleep'],
-    "lactic-sensor" : [0, 0, 'sleep'],
-    "ph-value-sensor" : [0, 0, 'sleep'],
-    "pulse-oximeter-sensor" : [0, 0, 'sleep'],
-    "respirratory-monitor-sensor" : [0, 0, 'sleep']
+    "sink": [0, 0, 'active'],
+    "blood-pressure-sensor": [0, 0, 'sleep'],
+    "ecg-sensor": [0, 0, 'sleep'],
+    "body-temperature-sensor": [0, 0, 'sleep'],
+    "heart-beat-sensor": [0, 0, 'sleep'],
+    "insulin-sensor": [0, 0, 'sleep'],
+    "lactic-sensor": [0, 0, 'sleep'],
+    "ph-value-sensor": [0, 0, 'sleep'],
+    "pulse-oximeter-sensor": [0, 0, 'sleep'],
+    "respirratory-monitor-sensor": [0, 0, 'sleep']
 }
 
 // Use the awsIoT library to create device object using the constants created before
 const device = awsIoT.device({
-   keyPath: keyPath,
-  certPath: certPath,
+    keyPath: keyPath,
+    certPath: certPath,
     caPath: caPath,
-  clientId: clientId,
-      host: host
+    clientId: clientId,
+    host: host
 });
 
 // Function to publish payload to IoT topic
@@ -47,9 +48,10 @@ function publishToTopic(topic, payload) {
     device.publish(topic, payload);
 }
 
-device.on('connect', function() {
+device.on('connect', function () {
     console.log('Connected to AWS IoT as Server!');
     device.subscribe(serverTopic);
+    device.subscribe(serverTopic + nearestSensor);
 });
 
 function nearestNode(device, x, y, status) {
@@ -57,13 +59,13 @@ function nearestNode(device, x, y, status) {
     prevCoord[device] = [x, y, status];
     var dist = 0;
     var minDist = Infinity;
-    for(var dev in prevCoord) {
-        if(dev != device) {
-            if(prevCoord[dev][2] == 'sleep' || prevCoord[dev][2] == 'dead') {
+    for (var dev in prevCoord) {
+        if (dev != device) {
+            if (prevCoord[dev][2] == 'sleep' || prevCoord[dev][2] == 'dead') {
                 continue;
             }
             dist = Math.sqrt(Math.pow((prevCoord[dev][0] - x), 2) + Math.pow((prevCoord[dev][1] - y), 2));
-            if(minDist > dist) {
+            if (minDist > dist) {
                 minDist = dist;
                 nearestPeer = dev;
             }
@@ -72,7 +74,7 @@ function nearestNode(device, x, y, status) {
     return nearestPeer;
 }
 
-device.on('message', function(topic, message) {
+device.on('message', function (topic, message) {
     var jMessage = JSON.parse(message);
 
     var device = jMessage['device'];
@@ -83,17 +85,20 @@ device.on('message', function(topic, message) {
 
     var nearestPeer = 'sink';
 
-    if(deviceStatus == 'dead' || deviceStatus == 'sleep') {
+    if (deviceStatus == 'dead' || deviceStatus == 'sleep') {
         prevCoord[device] = [prevCoord[device][0], prevCoord[device][1], deviceStatus];
         return nearestPeer;
     } else {
         prevCoord[device] = [deviceX, deviceY, deviceStatus];
     }
 
-    if(deviceBattery <= 5) {
+    if (serverTopic + nearestSensor == topic) {
         nearestPeer = nearestNode(device, deviceX, deviceY, deviceStatus);
-        console.log('Message Recevied from ' + device + ' and nearestNode: ' + nearestPeer);
+        let msg = {};
+        msg['src-sensor'] = device;
+        msg['dest-sensor'] = nearestPeer;
 
-        publishToTopic(scalable + device + dump, nearestPeer);
+        var jmsg = JSON.stringify(msg);
+        publishToTopic(sinkTopic + nearestSensor, jmsg);
     }
 });
