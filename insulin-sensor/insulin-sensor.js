@@ -143,7 +143,6 @@ function getSensorData(deviceName) {
     return message;
 }
 
-// currently only recives charger related information
 device.on('message', function(topic, message) {
     console.log("Message Received on Topic: " + topic + ": " + message);
     if(sinkTopic + deviceName == topic) {

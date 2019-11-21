@@ -32,11 +32,11 @@ device.on('connect', function() {
     battery = 100.0;
     status = 'active';
 
-    // subscribing to 'scalable/sink/body-temperature-sensor' for charger notifications.
+    // subscribing to 'scalable/sink/lactic-acid-sensor' for charger notifications.
     device.subscribe(sinkTopic + deviceName);
-    // subscribling to 'scalable/body-temperature-sensor/dump' for notficiation about which node to dump too.
+    // subscribling to 'scalable/lactic-acid-sensor/dump' for notficiation about which node to dump too.
     device.subscribe(scalable + deviceName + dump);
-    // subscribling to 'scalable/body-temperature-sensor/dump/receive' for notficiation about being the dump node.
+    // subscribling to 'scalable/lactic-acid-sensor/dump/receive' for notficiation about being the dump node.
     device.subscribe(scalable + deviceName + dumprev);
 
     // Start the publish loop
@@ -119,13 +119,14 @@ function randomIntBetween(minValue,maxValue){
 // Generate random sensor data based on the deviceName
 function getSensorData(deviceName) {
     let message = {
-        'temperature': randomIntBetween(94, 106) // less than 97 and more than 101 is bad
+        'lactic-acid': randomIntBetween(110, 210)
     };
+
     
     const device_data = { 
-        'body-temperature-sensor': {
-            'x': randomIntBetween(30, 40),
-            'y': randomIntBetween(30, 40)
+        'lactic-acid-sensor': {
+            'x': randomIntBetween(40, 50),
+            'y': randomIntBetween(40, 50)
         }
     };
   
@@ -160,3 +161,4 @@ device.on('message', function(topic, message) {
 function publishToTopic(topic, payload) {
     device.publish(topic, payload);
 }
+
