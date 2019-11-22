@@ -52,9 +52,8 @@ device.on('message', function (topic, message) {
 
         var device = jMessage['device'];
         var deviceBattery = jMessage['battery'];
-        var deviceX = jMessage['x'];
-        var deviceY = jMessage['y'];
-        var deviceDateTime = jMessage['datetime'];
+        var killSensor = jMessage['isunplugged'];
+        var isKilled = jMessage['iskilled'];
 
         let msg = {
             'sendMail': true,
@@ -62,7 +61,6 @@ device.on('message', function (topic, message) {
         };
 
         var sendMail = false;
-        var killSensor = false;
         console.log('Message Recevied from ' + device);
         if (device == 'body-temperature-sensor') {
             var temperature = jMessage['temperature'];
@@ -71,7 +69,6 @@ device.on('message', function (topic, message) {
                 msg['metricValue'] = temperature.toString();
                 sendMail = true;
             }
-            killSensor = true;
         } else if (device == 'heart-beat-sensor') {
             var beats = jMessage['beats'];
             if (beats > 80) {
@@ -101,7 +98,6 @@ device.on('message', function (topic, message) {
                 msg['metricValue'] = phValue.toString();
                 sendMail = true;
             }
-            killSensor = true;
         } else if (device == 'pulse-oximeter-sensor') {
             var oxygenSaturation = jMessage['oxygen-saturation'];
             if (oxygenSaturation < 88) {
@@ -116,7 +112,6 @@ device.on('message', function (topic, message) {
                 msg['metricValue'] = lacticAcid.toString();
                 sendMail = true;
             }
-            killSensor = true;
         } else if (device == 'respiratory-monitor-sensor') {
             var respiratoryMonitor = jMessage['respiratory-monitor'];
             if (respiratoryMonitor < 14 || respiratoryMonitor > 27) {
@@ -140,9 +135,9 @@ device.on('message', function (topic, message) {
                 publishToTopic(severTopic + nearestSensor, message);
             }
         } else {
-            if (deviceBattery <= 25.0) {
+            if (deviceBattery <= 25.0 && !isKilled) {
                 publishToTopic(sinkTopic + device, 'true');
-            } else if (deviceBattery >= 100.0) {
+            } else if (deviceBattery >= 100.0 && !isKilled) {
                 publishToTopic(sinkTopic + device, 'false');
             }
         }

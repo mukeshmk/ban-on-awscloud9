@@ -107,7 +107,6 @@ device.on('message', function (topic, message) {
     var jMessage = JSON.parse(message);
 
     var device = jMessage['device'];
-    var deviceBattery = jMessage['battery'];
     var deviceStatus = jMessage['status'];
     var deviceX = jMessage['x'];
     var deviceY = jMessage['y'];
