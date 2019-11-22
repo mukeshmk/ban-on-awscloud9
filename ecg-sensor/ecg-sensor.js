@@ -135,8 +135,8 @@ function getSensorData(deviceName) {
 
     const device_data = { 
         'ecg-sensor': {
-            'x': randomIntBetween(40, 50),
-            'y': randomIntBetween(40, 50)
+            'x': randomIntBetween(58, 62),
+            'y': randomIntBetween(58, 62)
         }
     };
   

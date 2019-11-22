@@ -139,8 +139,8 @@ function getSensorData(deviceName) {
     
     const device_data = { 
         'insulin-sensor': {
-            'x': randomIntBetween(50, 60),
-            'y': randomIntBetween(50, 60)
+            'x': randomIntBetween(-38, -42),
+            'y': randomIntBetween(38, 42)
         }
     };
   

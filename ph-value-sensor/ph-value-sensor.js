@@ -140,8 +140,8 @@ function getSensorData(deviceName) {
     
     const device_data = { 
         'ph-value-sensor': {
-            'x': randomIntBetween(30, 40),
-            'y': randomIntBetween(30, 40)
+            'x': randomIntBetween(-38, -42),
+            'y': randomIntBetween(-38, -42)
         }
     };
   

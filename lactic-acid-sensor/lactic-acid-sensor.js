@@ -135,8 +135,8 @@ function getSensorData(deviceName) {
 
     const device_data = { 
         'lactic-acid-sensor': {
-            'x': randomIntBetween(40, 50),
-            'y': randomIntBetween(40, 50)
+            'x': randomIntBetween(-18, -22),
+            'y': randomIntBetween(-18, -22)
         }
     };
   

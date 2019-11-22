@@ -134,8 +134,8 @@ function getSensorData(deviceName) {
     
     const device_data = { 
         'pulse-oximeter-sensor': {
-            'x': randomIntBetween(50, 60),
-            'y': randomIntBetween(50, 60)
+            'x': randomIntBetween(18, 22),
+            'y': randomIntBetween(-18, -22)
         }
     };
   

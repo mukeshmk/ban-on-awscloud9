@@ -136,8 +136,8 @@ function getSensorData(deviceName) {
 
     const device_data = {
         'respiratory-monitor-sensor': {
-            'x': randomIntBetween(40, 50),
-            'y': randomIntBetween(40, 50)
+            'x': randomIntBetween(38, 42),
+            'y': randomIntBetween(-38, -42)
         }
     };
 
