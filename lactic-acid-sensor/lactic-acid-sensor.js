@@ -13,6 +13,7 @@ const sinkTopic = scalable + 'sink/';
 const serverTopic = scalable + 'server/';
 const dump = '/dump';
 const dumprev = dump + '/receive';
+const cmdTopic = scalable + 'cmd/';
 
 // Create the thingShadow object with argument data
 const device = awsIoT.device({
@@ -26,6 +27,9 @@ const device = awsIoT.device({
 var battery;
 var status;
 var isCharging = false;
+var isUnplugged = false;
+var isKilled = false;
+var isTimeOutOverridden = false;
 
 // Function that gets executed when the connection to IoT is established
 device.on('connect', function() {
@@ -41,6 +45,8 @@ device.on('connect', function() {
     device.subscribe(scalable + deviceName + dumprev);
     // subscribing to 'scalable/server/lactic-acid-sensor' for info about the routing.
     device.subscribe(serverTopic + deviceName);
+    // subscribing to 'scalable/cmd/lactic-acid-sensor' for interaction with the command line interface.
+    device.subscribe(cmdTopic + deviceName);
 
     // Start the publish loop
     infiniteLoopPublish();
@@ -57,7 +63,7 @@ function updateBatteryStatus(dischargeRate, isCharging) {
             battery+=1.0;
         }
     } else {
-        if(status == 'dead') {
+        if(status == 'dead' || isKilled) {
             return;
         }
 
@@ -84,7 +90,7 @@ function infiniteLoopPublish() {
     var timeOut;
     var dischargeRate;
 
-    if(status == 'dead') {
+    if(status == 'dead' || isKilled) {
         publishToTopic(sinkTopic, JSON.stringify(getSensorData(deviceName)));
         updateBatteryStatus(0, isCharging);
         setTimeout(infiniteLoopPublish, 2000);
@@ -102,6 +108,11 @@ function infiniteLoopPublish() {
 
         var data = JSON.stringify(getSensorData(deviceName));
 
+        if(isTimeOutOverridden) {
+            timeOut = 1000;
+            dischargeRate = 0.5;
+            isCharging = false;
+        }
         // Publish sensor data to scalable/sink topic
         publishToTopic(sinkTopic, data);
 
@@ -122,7 +133,6 @@ function getSensorData(deviceName) {
         'lactic-acid': randomIntBetween(110, 210)
     };
 
-    
     const device_data = { 
         'lactic-acid-sensor': {
             'x': randomIntBetween(40, 50),
@@ -135,6 +145,8 @@ function getSensorData(deviceName) {
     message['y'] = device_data[deviceName].y;
     message['status'] = status;
     message['device'] = deviceName;
+    message['isunplugged'] = isUnplugged;
+    message['iskilled'] = isKilled;
     message['datetime'] = new Date().toISOString().replace(/\..+/, '');
     
     return message;
@@ -145,8 +157,10 @@ device.on('message', function(topic, message) {
     if(sinkTopic + deviceName == topic) {
         if(message == 'true') {
             isCharging = true;
+            isUnplugged = false;
         } else if (message == 'false') {
             isCharging = false;
+            isUnplugged = false;
         } else {
             console.log('Unknown value for charger status! not modifying the exisiting value!');
         }
@@ -162,6 +176,52 @@ device.on('message', function(topic, message) {
         var destSensor = jMessage['dest-sensor'];
         if (status == 'active' || status == 'awake') {
             console.log('Sending sensor telemetry data to BAN\'s ' + destSensor + ' for ' + srcSensor + ' via: ' + route);
+        }
+    } else if (cmdTopic + deviceName == topic) {
+        switch(message.toString()) {
+            case 'kill':
+                console.log('killing node ' + deviceName + '!');
+                battery = -1;
+                status = 'dead';
+                isKilled = true;
+                break;
+            case 'restart':
+                console.log('restarting the node ' + deviceName + '!');
+                battery = 100;
+                status = 'active';
+                isKilled = false;
+                break;
+            case 'pause':
+                console.log('putting the ' + deviceName + ' to deep sleep');
+                status = 'sleep';
+                isKilled = true;
+                break;
+            case 'start':
+                console.log('waking the ' + deviceName + ' from deep sleep');
+                status = 'active';
+                isKilled = false;
+                break;
+            case 'emergency':
+                console.log('updating the duty cycle of ' + deviceName + ' to send constant updates');
+                isTimeOutOverridden = true;
+                break;
+            case 'normal':
+                console.log('updating the duty cycle of ' + deviceName + ' to work as usual');
+                isTimeOutOverridden = false;
+                break;
+            case 'plugin':
+                console.log('hard charging the ' + deviceName);
+                isCharging = true;
+                isUnplugged = false;
+                break;
+            case 'unplug':
+                console.log('unplugging the ' + deviceName +' from charging');
+                isUnplugged = true;
+                isCharging = false;
+                break;
+            default:
+                console.log('incorrect cmd please enter again!');
+                break;
         }
     }
 });
